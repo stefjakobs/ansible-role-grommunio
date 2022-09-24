@@ -1,0 +1,47 @@
+---
+- name: nginx | Set ssl certificates
+  ansible.builtin.template:
+    src: etc/grommunio-common/nginx/ssl_certficate.conf.j2
+    dest: /etc/grommunio-common/nginx/ssl_certficate.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: nginx | Create symlink to nginx-ssl.conf
+  ansible.builtin.file:
+    src: /etc/grommunio-common/nginx/ssl_certficate.conf
+    dest: /etc/grommunio-admin-common/nginx-ssl.conf
+    state: link
+
+- name: nginx | Disable default vhost
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: grommunio | service nginx restart
+
+# This template ensures that nginx listens only on localhost:8081 (http).
+# This setup needs an other TLS offloader in front of nginx
+# - name: nginx | Override default config
+#   ansible.builtin.template:
+#     src: templates/etc/nginx/conf.d/grommunio.conf.j2
+#     dest: /etc/nginx/conf.d/grommunio.conf
+#     owner: root
+#     group: root
+#     mode: '0644'
+#   notify: grommunio | service nginx restart
+  
+- name: nginx | Change default ports
+  ansible.builtin.lineinfile:
+    path: /usr/share/grommunio-common/nginx.conf
+    line: "{{ item.line }}"
+    regexp: "{{ item.regexp }}"
+  loop:
+    - line: '  listen 8081;'
+      regexp: '^  listen 80;$'
+    - line: '  listen [::]:8081;'
+      regexp: '^  listen \[::\]:80;$'
+    - line: '  listen [::]:8444 ssl http2;'
+      regexp: '^  listen \[::\]:443 ssl http2;$'
+    - line: '  listen 8444 ssl http2;'
+      regexp: '^  listen 443 ssl http2;$'
+  notify: grommunio | service nginx restart

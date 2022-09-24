@@ -1,0 +1,9 @@
+default_domain={{ grommunio__default_domain }}
+# listen_port=143
+{% if grommunio__support_ssl %}
+listen_ssl_port=993
+imap_support_starttls=true
+imap_certificate_path=/etc/gromox/tls/cert.pem
+imap_private_key_path=/etc/gromox/tls/privkey.pem
+imap_force_starttls=true
+{% endif %}

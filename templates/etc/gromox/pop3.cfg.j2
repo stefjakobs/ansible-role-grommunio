@@ -1,0 +1,9 @@
+default_domain={{ grommunio__default_domain }}
+# listen_port=110
+{% if grommunio__support_ssl %}
+listen_ssl_port=995
+pop3_support_stls=true
+pop3_certificate_path=/etc/gromox/tls/cert.pem
+pop3_private_key_path=/etc/gromox/tls/privkey.pem
+pop3_force_stls=true
+{% endif %}

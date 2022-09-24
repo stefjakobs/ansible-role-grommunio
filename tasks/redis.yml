@@ -1,0 +1,37 @@
+---
+- name: redis | install redis
+  ansible.builtin.package:
+    name: redis
+    state: present
+
+- name: redis | add systemd service
+  ansible.builtin.template:
+    src: etc/systemd/system/redis@grommunio.service.j2
+    dest: /etc/systemd/system/redis@grommunio.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - grommunio | systemd daemon-reload
+
+- name: redis | create default directory
+  ansible.builtin.file:
+    path: /var/lib/redis/default
+    state: directory
+    owner: redis
+    group: redis
+    mode: '0755'
+
+- name: redis | ensure redis@grommunio is enabled and running
+  ansible.builtin.systemd:
+    name: redis@grommunio
+    enabled: true
+    state: started
+
+- name: redis | ensure redis service is disabled and stopped
+  ansible.builtin.systemd:
+    name: redis-server
+    enabled: false
+    state: stopped
+  when: grommunio__disable_default_redis
+  

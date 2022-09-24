@@ -1,0 +1,50 @@
+---
+
+- name: install | Add apt key
+  ansible.builtin.apt_key:
+    url: https://download.grommunio.com/RPM-GPG-KEY-grommunio
+    state: present
+    id: 87B1B28E1E1F6721798CD1CDF448DE9B1BE231D9
+
+- name: install | Add repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://download.grommunio.com/community/Debian_{{ ansible_distribution_major_version }} Debian_{{ ansible_distribution_major_version }} main"
+    state: present
+    filename: grommunio
+
+- name: install | Install gromox
+  ansible.builtin.apt:
+    name: "{{ grommunio__packages }}"
+    update_cache: true
+    cache_valid_time: 86400
+
+- name: install | Create tls dir
+  ansible.builtin.file:
+    path: /etc/gromox/tls
+    state: directory
+    owner: root
+    group: gromox
+    mode: '0750'
+
+- name: install | Copy certificates
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: gromox
+    group: gromox
+    mode: '0640'
+  loop:
+    - src: "{{ grommunio__certificate_path }}"
+      dest: /etc/gromox/tls/cert.pem
+    - src: "{{ grommunio__private_key_path }}"
+      dest: /etc/gromox/tls/privkey.pem
+
+- name: install | Add cronjob that updates certs
+  ansible.builtin.cron:
+    name: grommunio_cert_update
+    minute: 23
+    hour: 1
+    job: "cp {{ grommunio__certificate_path }} /etc/gromox/tls/cert.pem && cp {{ grommunio__private_key_path }} /etc/gromox/tls/privkey.pem && chown gromox:gromox /etc/gromox/tls/cert.pem /etc/gromox/tls/privkey.pem"
+    user: root
+    cron_file: grommunio_cert_update

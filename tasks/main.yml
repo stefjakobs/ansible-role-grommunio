@@ -1,0 +1,27 @@
+---
+
+- name: include install tasks
+  ansible.builtin.include_tasks: install.yml
+
+- name: include configure tasks
+  ansible.builtin.include_tasks: configure.yml
+
+- name: include redis tasks
+  ansible.builtin.include_tasks: redis.yml
+
+- name: Enable and start services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - gromox-event
+    - gromox-timer
+    - gromox-http
+    - gromox-midb
+    - gromox-zcore
+    - grommunio-admin-api
+    - gromox-imap
+    - gromox-pop3
+    - gromox-delivery
+    - gromox-delivery-queue

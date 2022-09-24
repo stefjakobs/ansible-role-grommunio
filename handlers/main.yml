@@ -1,0 +1,40 @@
+---
+
+- name: grommunio | systemd daemon-reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+  
+- name: grommunio | service gromox-http restart
+  ansible.builtin.systemd:
+    name: gromox-http
+    state: restarted
+
+- name: grommunio | service gromox-imap restart
+  ansible.builtin.systemd:
+    name: gromox-imap
+    state: restarted
+
+- name: grommunio | service gromox-pop3 restart
+  ansible.builtin.systemd:
+    name: gromox-pop3
+    state: restarted
+
+- name: grommunio | service gromox-delivery-queue restart
+  ansible.builtin.systemd:
+    name: gromox-delivery-queue
+    state: restarted
+
+- name: grommunio | service grommunio-admin-api restart
+  ansible.builtin.systemd:
+    name: grommunio-admin-api
+    state: restarted
+
+- name: grommunio | service nginx restart
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+
+- name: grommunio | service php7.4-fpm restart
+  ansible.builtin.systemd:
+    name: php7.4-fpm.service
+    state: restarted

@@ -1,0 +1,16 @@
+---
+# defaults file for grommunio
+
+grommunio__default_domain: "{{ ansible_domain }}"
+grommunio__default_host: "www.{{ grommunio__default_domain }}"
+
+grommunio__mysql_username: grommunio
+# grommunio__mysql_password:
+grommunio__mysql_dbname: grommunio
+
+grommunio__support_ssl: true
+
+#grommunio__certificate_path: 
+#grommunio__private_key_path:
+
+grommunio__disable_default_redis: true

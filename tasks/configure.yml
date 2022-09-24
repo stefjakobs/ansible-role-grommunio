@@ -1,0 +1,103 @@
+---
+- name: configure | ship http config
+  ansible.builtin.template:
+    src: "{{ item.path }}.j2"
+    dest: "/{{ item.path }}"
+    owner: "{{ item.owner|default('root') }}"
+    group: "{{ item.group|default('root') }}"
+    mode: "{{ item.mode|default(omit) }}"   # should be 0660, but it changes always between 0640 and 0660
+  loop:
+    - path: etc/gromox/mysql_adaptor.cfg
+      group: gromox
+      mode: '0640'
+    - path: etc/gromox/http.cfg
+      group: gromox
+      mode: '0640'
+    - path: etc/grommunio-admin-api/conf.d/database.yaml
+      group: grommunio
+    - path: etc/grommunio-admin-common/config.json
+      group: grommunio
+    - path: etc/grommunio-admin-common/nginx.d/web-config.conf
+  notify: grommunio | service gromox-http restart
+
+- name: configure | ship admin config
+  ansible.builtin.template:
+    src: "{{ item.path }}.j2"
+    dest: "/{{ item.path }}"
+    owner: "{{ item.owner|default('root') }}"
+    group: "{{ item.group|default('root') }}"
+    mode: "{{ item.mode|default(omit) }}"   # should be 0660, but it changes always between 0640 and 0660
+  loop:
+    - path: etc/grommunio-admin-api/conf.d/database.yaml
+      group: grommunio
+    - path: etc/grommunio-admin-common/config.json
+      group: grommunio
+    - path: etc/grommunio-admin-common/nginx.d/web-config.conf
+  notify: grommunio | service grommunio-admin-api restart
+
+- name: configure | ship smtp config
+  ansible.builtin.template:
+    src: "{{ item.path }}.j2"
+    dest: "/{{ item.path }}"
+    owner: "{{ item.owner|default('root') }}"
+    group: "{{ item.group|default('root') }}"
+    mode: "{{ item.mode|default('0640') }}"
+  loop:
+    - path: etc/gromox/smtp.cfg
+      group: gromox
+  notify: grommunio | service gromox-delivery-queue restart
+
+- name: configure | Initial database setup
+  ansible.builtin.command: gromox-dbop -c /etc/gromox/mysql_adaptor.cfg -C
+  args:
+    creates: /var/lib/gromox/.db_initialized
+
+- name: configure | Create status file
+  ansible.builtin.copy:
+    content: "# This file is managed by ansible - grommunio database created"
+    dest: /var/lib/gromox/.db_initialized
+    mode: '0600'
+
+- name: configure | ship imap config
+  ansible.builtin.template:
+    src: etc/gromox/imap.cfg.j2
+    dest: /etc/gromox/imap.cfg
+    owner: root
+    group: gromox
+    mode: '0660'
+  notify: grommunio | service gromox-imap restart
+
+- name: configure | ship pop3 config
+  ansible.builtin.template:
+    src: etc/gromox/pop3.cfg.j2
+    dest: /etc/gromox/pop3.cfg
+    owner: root
+    group: gromox
+    mode: '0660'
+  notify: grommunio | service gromox-pop3 restart
+
+# WORKAROUND missing socket dir
+- name: configure | Ensure systemd override dir exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/php7.4-fpm.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: configure | Ensure socket path will be created with service start
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      RuntimeDirectory=/run/php-fpm
+    dest: /etc/systemd/system/php7.4-fpm.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - grommunio | systemd daemon-reload
+    - grommunio | service php7.4-fpm restart
+# WORKAROUND END
+
+- name: configure | add nginx config
+  ansible.builtin.include_tasks: nginx.yml

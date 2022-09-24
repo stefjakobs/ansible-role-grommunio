@@ -1,0 +1,8 @@
+---
+grommunio__packages:
+  - gromox
+  - grommunio-admin-api
+  - grommunio-admin-web
+  - grommunio-common
+  - grommunio-web
+  - grommunio-sync

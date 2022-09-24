@@ -1,0 +1,17 @@
+[Unit]
+Description=Redis instance: %i
+After=network.target
+PartOf=redis.target
+
+[Service]
+Type=notify
+User=redis
+Group=redis
+PrivateTmp=true
+PIDFile=/run/redis/%i.pid
+ExecStart=/usr/bin/redis-server /etc/redis/%i.conf
+LimitNOFILE=10240
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target redis.target

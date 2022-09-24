@@ -1,0 +1,8 @@
+http_listen_addr=127.0.0.1
+listen_port=10080
+{% if grommunio__support_ssl %}
+listen_ssl_port=10443
+http_support_ssl=yes
+http_certificate_path=/etc/gromox/tls/cert.pem
+http_private_key_path=/etc/gromox/tls/privkey.pem
+{% endif %}
